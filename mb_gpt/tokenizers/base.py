@@ -6,14 +6,15 @@ import regex as re
 from typing import List, Optional, Tuple, Union
 import tiktoken
 from PIL import Image
-# import sentencepiece as spm
+import torch
+from torch import nn
 
 __all__ = ["Tokenizer", "VITokenizer"]
 
 SPLIT_REGEX1 = re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+|\p{N}+|[^\s\p{L}\p{N}]+|\s+""")
 SPLIT_REGEX2 = re.compile(r"""[\w'-]+|[^\w\s]+|\s+""")
 
-class Tokenizer:
+class Tokenizer(nn.Module):
     """
     Base tokenizer class for the GPT model.
     """
@@ -114,40 +115,41 @@ class Tokenizer:
             return self._decode_tokens(tokens, self.vocab)
         return self.enc.decode(tokens)
 
+    def forward(self):
+        pass
 
-class VITokenizer():
+
+class VITokenizer(nn.Module):
     """ 
     Tokenizer for Vision and Language tasks.
     """
-    def __init__(self) -> None:
-        pass
+    def __init__(self,images,patch_size=16,emb_dim=768,cls_token=False) -> None:
+        self.patch_size = patch_size
+        self.emb_dim = emb_dim
+        self.images = images
+        self.num_patches = (images.shape[2]//patch_size)**2
+        if cls_token:
+            self.cls_token = nn.Parameter(torch.randn(1,1,emb_dim))
+            self.positional_embeddings = nn.Parameter(torch.randn(1,self.num_patches+1, emb_dim))
+        else:
+            self.positional_embeddings = nn.Parameter(torch.randn(1,self.num_patches, emb_dim))
+        self.patch_embeddings = nn.Linear(3*patch_size*patch_size, emb_dim)
+        
+    def forward(self,x):
+        
+        if x.shape[2] % self.patch_size != 0:
+            raise ValueError(f"Patch size {self.patch_size} does not divide image width {x.shape[2]}")
+        if x.shape[3] % self.patch_size != 0:
+            raise ValueError(f"Patch size {self.patch_size} does not divide image height {x.shape[3]}")
+        patches = torch.nn.functional.unfold(x, (self.patch_size,self.patch_size), self.patch_size).permute(0,2,1)
+        patch_embeddings = self.patch_embeddings(patches)
 
-    def _read_image(self, image: str) -> Image:
-        """
-        Read an image.
-        """
-        if isinstance(image, Image.Image):
-            return image
-        return Image.open(image)
+        if hasattr(self,'cls_token'):
+            cls_token = self.cls_token.expand(patches.shape[0],-1,-1)
+            patch_embeddings = torch.cat((cls_token,patch_embeddings),dim=1)
+        embeddings = patch_embeddings + self.positional_embeddings
+        return embeddings
 
-    def _to_patches(self, image: str, patch_size: int) -> List[str]:
-        """
-        Convert an image to patches.
-        """
-        pass
-
-
-    def _convert_image_to_tokens(self, image: str) -> List[str]:
-        """
-        Convert an image to a list of tokens.
-        """
-        pass
-
-    def _convert_tokens_to_image(self, tokens: List[str]) -> str:
-        """
-        Convert tokens to an image.
-        """
-        pass
 
 
 class AudioTokenizers():
@@ -155,8 +157,9 @@ class AudioTokenizers():
     Tokenizers for audio data.
     """
     def __init__(self) -> None:
+        import torchaudio
         pass
-
+    
     def _convert_audio_to_tokens(self, audio: str) -> List[str]:
         """
         Convert audio to a list of tokens.
