@@ -18,9 +18,12 @@ class Tokenizer(nn.Module):
     """
     Base tokenizer class for the GPT model.
     """
-    def __init__(self) -> None:
+    def __init__(self,emb_dim = 768,batch=16) -> None:
         self.enc = None
         self.vocab = None
+        self.emb_dim = emb_dim
+        self.batch = batch
+        self.linear_layer = nn.Linear(self.batch,self.emb_dim)
 
     def load_tiktoken(self,token_type='gpt2') -> None:
         """
@@ -115,8 +118,9 @@ class Tokenizer(nn.Module):
             return self._decode_tokens(tokens, self.vocab)
         return self.enc.decode(tokens)
 
-    def forward(self):
-        pass
+    def forward(self,x):
+        pass        
+
 
 
 class VITokenizer(nn.Module):
