@@ -8,6 +8,7 @@ import tiktoken
 from PIL import Image
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 __all__ = ["Tokenizer", "VITokenizer"]
 
@@ -23,7 +24,6 @@ class Tokenizer(nn.Module):
         self.vocab = None
         self.emb_dim = emb_dim
         self.batch = batch
-        self.linear_layer = nn.Linear(self.batch,self.emb_dim)
 
     def load_tiktoken(self,token_type='gpt2') -> None:
         """
@@ -119,7 +119,8 @@ class Tokenizer(nn.Module):
         return self.enc.decode(tokens)
 
     def forward(self,x):
-        pass        
+        output = nn.Linear(x.shape[1],self.emb_dim)(x)     
+        return output   
 
 
 
