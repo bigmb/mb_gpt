@@ -5,10 +5,8 @@ Main tokenizer class for the GPT model.
 import regex as re
 from typing import List, Optional, Tuple, Union
 import tiktoken
-from PIL import Image
 import torch
 from torch import nn
-import torch.nn.functional as F
 
 __all__ = ["Tokenizer", "VITokenizer"]
 
@@ -19,20 +17,19 @@ class Tokenizer(nn.Module):
     """
     Base tokenizer class for the GPT model.
     """
-    def __init__(self,emb_dim = 768,batch=16) -> None:
+    def __init__(self) -> None:
         self.enc = None
         self.vocab = None
-        self.emb_dim = emb_dim
-        self.batch = batch
+        self.texts = None
 
-    def load_tiktoken(self,token_type='gpt2') -> None:
+    def load_tiktoken(self, token_type='gpt2') -> None:
         """
         Load the TikToken tokenizer.
         """
         self.enc = tiktoken.get_encoding(token_type)
         return self.enc
 
-    def _convert_split_text(self, text: str,split_regex: str = None) -> List[str]:
+    def _convert_split_text(self, text: str, split_regex: str = None) -> List[str]:
         """
         Split text into tokens.
         Args:
@@ -54,10 +51,13 @@ class Tokenizer(nn.Module):
             dict: A dictionary of the vocabulary.
         """
         words = sorted(list(set(texts)))
+        words.extend(["<|endoftext|>", "<|unk|>", "<|pad|>"])
         vocab_size = len(words)
         self.vocab = {word: idx for idx, word in enumerate(words)}
+        self.decode_vocab = {idx: word for idx, word in enumerate(words)}
+
         print(f"Vocabulary size: {vocab_size}")
-        for idx,word in self.vocab.items():
+        for idx,word in self.decode_vocab.items():
             print(f"{word}: {idx}")
             if idx > 10:
                 break
@@ -66,24 +66,26 @@ class Tokenizer(nn.Module):
     def _encode_text(self, text: str) -> List[int]:
         """
         Encode text into tokens.
+        Appends <|endoftext|> at the end of the document.
         Args:
             text: The text to encode.
-            vocab: The vocabulary to use for encoding.
         Returns:
             List[int]: A list of encoded tokens.
         """
-        return [self.vocab[token] for token in text]
+        tokens = self._convert_split_text(text)
+        tokens.append("<|endoftext|>")
+        return [self.vocab[token] if token in self.vocab else self.vocab["<|unk|>"] for token in tokens]
 
     def _decode_tokens(self, tokens: List[int]) -> str:
         """
         Decode tokens into text.
         Args:
             tokens: The tokens to decode.
-            vocab: The vocabulary to use for decoding.
         Returns:
             str: The decoded text.
         """
-        return " ".join([self.vocab[token] for token in tokens])
+        decoded = " ".join([list(self.vocab.keys())[list(self.vocab.values()).index(token)] for token in tokens])
+        return decoded.replace("<|endoftext|>", "").strip() 
 
     def encode(self, text: str) -> List[int]:
         """
@@ -92,14 +94,13 @@ class Tokenizer(nn.Module):
         Else needs an existing vocabulary to encode the text.
         Args:
             text: The text to encode.
-            byte_encode: Whether to encode the text as bytes. Defaults to False.
         Returns:
             List[int]: A list of encoded tokens.
         """
         if self.enc is None:
             if self.vocab is None:
                 raise ValueError("No tokenizer or vocabulary loaded.")
-            return self._encode_text(text, self.vocab)
+            return self._encode_text(text)
         return self.enc.encode(text)
 
     def decode(self, tokens: List[int]) -> str:
@@ -115,24 +116,19 @@ class Tokenizer(nn.Module):
         if self.enc is None:
             if self.vocab is None:
                 raise ValueError("No tokenizer or vocabulary loaded.")
-            return self._decode_tokens(tokens, self.vocab)
+            return self._decode_tokens(tokens)
         return self.enc.decode(tokens)
-
-    def forward(self,x):
-        output = nn.Linear(x.shape[1],self.emb_dim)(x)     
-        return output   
-
 
 
 class VITokenizer(nn.Module):
     """ 
     Tokenizer for Vision and Language tasks.
     """
-    def __init__(self,images,patch_size=16,emb_dim=768,cls_token=False) -> None:
+    def __init__(self,batch_images,patch_size=16,emb_dim=768,cls_token=False) -> None:
         self.patch_size = patch_size
         self.emb_dim = emb_dim
-        self.images = images
-        self.num_patches = (images.shape[2]//patch_size)**2
+        self.batch_images = batch_images
+        self.num_patches = (batch_images.shape[2]//patch_size)**2
         if cls_token:
             self.cls_token = nn.Parameter(torch.randn(1,1,emb_dim))
             self.positional_embeddings = nn.Parameter(torch.randn(1,self.num_patches+1, emb_dim))
@@ -154,7 +150,6 @@ class VITokenizer(nn.Module):
             patch_embeddings = torch.cat((cls_token,patch_embeddings),dim=1)
         embeddings = patch_embeddings + self.positional_embeddings
         return embeddings
-
 
 
 class AudioTokenizers():
