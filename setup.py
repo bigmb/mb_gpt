@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from setuptools import setup,find_packages
+from setuptools import setup,find_packages,find_namespace_packages
 import os
 
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "VERSION.txt")
@@ -10,8 +10,7 @@ setup(
     name="mb_gpt",
     description="GPT functions",
     author=["Malav Bateriwala"],
-    packages=find_packages(),
-    #packages=find_packages(),
+    packages=find_namespace_packages(include=["mb.*"]),
     scripts=[],
     install_requires=[],
     setup_requires=["setuptools-git-versioning<2"],
