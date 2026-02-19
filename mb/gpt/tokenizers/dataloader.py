@@ -6,23 +6,35 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import torchvision.transforms as transforms
+from dataclasses import dataclass
+from typing import List, Optional
+from .base import TextTokenizer
 
-__all__ = ["TokenizerDataset", "VITokenizerDataset", "TokenizerDataLoader"]
+__all__ = ["TextTokenizerDataset", "VITokenizerDataset", "TextTokenizerDataLoader"]
 
-class TokenizerDataset(Dataset):
-    def __init__(self, texts, tokenizer, max_length=None, pad_token="<|pad|>"):
-        """
-        Initialize the dataset.
-        Args:
-            texts: List of text strings.
-            tokenizer: The tokenizer instance (must have encode method).
-            max_length: Maximum length of tokens (for padding/truncation). Defaults to None (no truncation).
-            pad_token: The token to use for padding. Defaults to "<|pad|>".
-        """
+@dataclass
+class TextTokenizerInput:
+    def __init__(self,
+                texts : List[str],
+                tokenizer: TextTokenizer,
+                max_length: Optional[int]=None,
+                pad_token: str="<|pad|>"):
         self.texts = texts
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.pad_token = pad_token
+
+class TextTokenizerDataset(Dataset):
+    def __init__(self, tokenizer_input: TextTokenizerInput):
+        """
+        Initialize the dataset.
+        Args:
+            tokenizer_input: An instance of TextTokenizerInput containing texts, tokenizer, max_length, and pad_token.
+        """
+        self.texts = tokenizer_input.texts
+        self.tokenizer = tokenizer_input.tokenizer
+        self.max_length = tokenizer_input.max_length
+        self.pad_token = tokenizer_input.pad_token
 
     def __len__(self):
         return len(self.texts)
@@ -63,18 +75,20 @@ class VITokenizerDataset(Dataset):
         
         return image,label
 
-class TokenizerDataLoader(DataLoader):
-    def __init__(self, texts, tokenizer, batch_size=4,shuffle=False,max_length=None, pad_token="<|pad|>", **kwargs):
+    def __repr__(self):
+        return f"VITokenizerDataset(num_samples={len(self)}), transform={self.transform})"
+
+class TextTokenizerDataLoader(DataLoader):
+    def __init__(self, tokenizer_input: TextTokenizerInput, batch_size=4, shuffle=False, **kwargs):
         """
         Initialize the DataLoader.
         Args:
-            texts: List of text strings.
-            tokenizer: The tokenizer instance (must have encode method).
-            max_length: Maximum length of tokens (for padding/truncation). Defaults to None (no truncation).
-            pad_token: The token to use for padding. Defaults to "<|pad|>".
+            tokenizer_input: An instance of TextTokenizerInput containing texts, tokenizer, max_length, and pad_token.
+            batch_size: The batch size for the DataLoader. Defaults to 4.
+            shuffle: Whether to shuffle the data. Defaults to False.
             **kwargs: Additional arguments for DataLoader.
         """
-        self.dataset = TokenizerDataset(texts, tokenizer, max_length, pad_token)
+        self.dataset = TextTokenizerDataset(tokenizer_input)
         self.batch_size = batch_size
         self.shuffle = shuffle
         super().__init__(self.dataset, **kwargs)

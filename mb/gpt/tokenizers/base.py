@@ -9,12 +9,12 @@ import torch
 from torch import nn
 from mb.utils.logging import logg
 
-__all__ = ["Tokenizer", "VITokenizer"]
+__all__ = ["TextTokenizer", "VITokenizer"]
 
 SPLIT_REGEX1 = re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+|\p{N}+|[^\s\p{L}\p{N}]+|\s+""")
 SPLIT_REGEX2 = re.compile(r"""[\w'-]+|[^\w\s]+|\s+""")
 
-class Tokenizer(nn.Module):
+class TextTokenizer(nn.Module):
     """
     Base tokenizer class for the GPT model.
     """
