@@ -7,7 +7,7 @@ from typing import List, Optional, Tuple, Union
 import tiktoken
 import torch
 from torch import nn
-from mb.utils.logger import logg
+from mb.utils.logging import logg
 
 __all__ = ["Tokenizer", "VITokenizer"]
 
