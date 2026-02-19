@@ -7,6 +7,7 @@ from typing import List, Optional, Tuple, Union
 import tiktoken
 import torch
 from torch import nn
+from mb.utils.logger import logg
 
 __all__ = ["Tokenizer", "VITokenizer"]
 
@@ -17,10 +18,11 @@ class Tokenizer(nn.Module):
     """
     Base tokenizer class for the GPT model.
     """
-    def __init__(self) -> None:
+    def __init__(self, logger=None) -> None:
         self.enc = None
         self.vocab = None
         self.texts = None
+        self.logger = logger
 
     def load_tiktoken(self, token_type='gpt2') -> None:
         """
@@ -56,9 +58,9 @@ class Tokenizer(nn.Module):
         self.vocab = {word: idx for idx, word in enumerate(words)}
         self.decode_vocab = {idx: word for idx, word in enumerate(words)}
 
-        print(f"Vocabulary size: {vocab_size}")
+        logg.info(f"Vocabulary size: {vocab_size}", logger=self.logger)
         for idx,word in self.decode_vocab.items():
-            print(f"{word}: {idx}")
+            logg.info(f"{word}: {idx}", logger=self.logger)
             if idx > 10:
                 break
         return self.vocab
@@ -156,8 +158,9 @@ class AudioTokenizers():
     """
     Tokenizers for audio data.
     """
-    def __init__(self) -> None:
+    def __init__(self,logger=None) -> None:
         import torchaudio
+        self.logger = logger
         pass
     
     def _convert_audio_to_tokens(self, audio: str) -> List[str]:
