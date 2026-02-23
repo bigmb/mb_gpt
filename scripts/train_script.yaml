@@ -1,0 +1,28 @@
+model:
+  name: "gpt2"
+  pretrained: true
+  num_layers: 12
+  num_heads: 12
+  d_model: 768
+  d_ff: 3072
+  max_position_embeddings: 1024
+  vocab_size: 50257
+
+training:
+  batch_size: 8
+  num_epochs: 3
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  warmup_steps: 1000
+  logging_steps: 100
+  save_steps: 500
+
+dataset:
+  name: "wikitext-2"
+  split: "train"
+  max_length: 512
+  num_workers: 4  
+
+output:
+  save_dir: "./model1" ## checkpoints,logs and data will be saved here
+  print_output: true

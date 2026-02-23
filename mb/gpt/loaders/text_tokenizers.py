@@ -2,8 +2,19 @@
 Main tokenizer class for the GPT model.
 """
 
-import regex as re
-from typing import List, Optional, Tuple, Union
+from __future__ import annotations
+
+import logging
+import importlib
+from typing import List, Pattern
+
+try:
+    import regex as _re 
+    _HAS_REGEX = True
+except Exception: 
+    import re as _re 
+    _HAS_REGEX = False
+
 import tiktoken
 import torch
 from torch import nn
@@ -11,27 +22,38 @@ from mb.utils.logging import logg
 
 __all__ = ["TextTokenizer", "VITokenizer"]
 
-SPLIT_REGEX1 = re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+|\p{N}+|[^\s\p{L}\p{N}]+|\s+""")
-SPLIT_REGEX2 = re.compile(r"""[\w'-]+|[^\w\s]+|\s+""")
+SPLIT_REGEX1: Pattern[str] | None = (
+    _re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+|\p{N}+|[^\s\p{L}\p{N}]+|\s+""")
+    if _HAS_REGEX
+    else None
+)
+SPLIT_REGEX2: Pattern[str] = _re.compile(r"""[\w'-]+|[^\w\s]+|\s+""")
+
+
+def _log_info(message: str, logger: logging.Logger | None = None) -> None:
+    (logger or logging.getLogger(__name__)).info(message)
+
 
 class TextTokenizer(nn.Module):
     """
     Base tokenizer class for the GPT model.
     """
     def __init__(self, logger=None) -> None:
+        super().__init__()
         self.enc = None
         self.vocab = None
+        self.decode_vocab = None
         self.texts = None
         self.logger = logger
 
-    def load_tiktoken(self, token_type='gpt2') -> None:
+    def load_tiktoken(self, token_type: str = "gpt2"):
         """
         Load the TikToken tokenizer.
         """
         self.enc = tiktoken.get_encoding(token_type)
         return self.enc
 
-    def _convert_split_text(self, text: str, split_regex: str = None) -> List[str]:
+    def _convert_split_text(self, text: str, split_regex: Pattern[str] | None = None) -> List[str]:
         """
         Split text into tokens.
         Args:
@@ -41,7 +63,7 @@ class TextTokenizer(nn.Module):
             A list of split text based on the split_regex.
         """
         if split_regex is None:
-            split_regex = SPLIT_REGEX1
+            split_regex = SPLIT_REGEX1 or SPLIT_REGEX2
         return split_regex.findall(text)
 
     def _build_vocab(self, texts: List[str]) -> dict:
@@ -76,7 +98,9 @@ class TextTokenizer(nn.Module):
         """
         tokens = self._convert_split_text(text)
         tokens.append("<|endoftext|>")
-        return [self.vocab[token] if token in self.vocab else self.vocab["<|unk|>"] for token in tokens]
+        vocab = self.vocab or {}
+        unk_id = vocab.get("<|unk|>", 0)
+        return [vocab.get(token, unk_id) for token in tokens]
 
     def _decode_tokens(self, tokens: List[int]) -> str:
         """
@@ -86,8 +110,10 @@ class TextTokenizer(nn.Module):
         Returns:
             str: The decoded text.
         """
-        decoded = " ".join([list(self.vocab.keys())[list(self.vocab.values()).index(token)] for token in tokens])
-        return decoded.replace("<|endoftext|>", "").strip() 
+        if not self.decode_vocab:
+            raise ValueError("No vocabulary loaded.")
+        decoded = " ".join(self.decode_vocab.get(token, "<|unk|>") for token in tokens)
+        return decoded.replace("<|endoftext|>", "").strip()
 
     def encode(self, text: str) -> List[int]:
         """
@@ -120,57 +146,3 @@ class TextTokenizer(nn.Module):
                 raise ValueError("No tokenizer or vocabulary loaded.")
             return self._decode_tokens(tokens)
         return self.enc.decode(tokens)
-
-
-class VITokenizer(nn.Module):
-    """ 
-    Tokenizer for Vision and Language tasks.
-    """
-    def __init__(self,batch_images,patch_size=16,emb_dim=768,cls_token=False) -> None:
-        self.patch_size = patch_size
-        self.emb_dim = emb_dim
-        self.batch_images = batch_images
-        self.num_patches = (batch_images.shape[2]//patch_size)**2
-        if cls_token:
-            self.cls_token = nn.Parameter(torch.randn(1,1,emb_dim))
-            self.positional_embeddings = nn.Parameter(torch.randn(1,self.num_patches+1, emb_dim))
-        else:
-            self.positional_embeddings = nn.Parameter(torch.randn(1,self.num_patches, emb_dim))
-        self.patch_embeddings = nn.Linear(3*patch_size*patch_size, emb_dim)
-        
-    def forward(self,x):
-        
-        if x.shape[2] % self.patch_size != 0:
-            raise ValueError(f"Patch size {self.patch_size} does not divide image width {x.shape[2]}")
-        if x.shape[3] % self.patch_size != 0:
-            raise ValueError(f"Patch size {self.patch_size} does not divide image height {x.shape[3]}")
-        patches = torch.nn.functional.unfold(x, (self.patch_size,self.patch_size), self.patch_size).permute(0,2,1)
-        patch_embeddings = self.patch_embeddings(patches)
-
-        if hasattr(self,'cls_token'):
-            cls_token = self.cls_token.expand(patches.shape[0],-1,-1)
-            patch_embeddings = torch.cat((cls_token,patch_embeddings),dim=1)
-        embeddings = patch_embeddings + self.positional_embeddings
-        return embeddings
-
-
-class AudioTokenizers():
-    """
-    Tokenizers for audio data.
-    """
-    def __init__(self,logger=None) -> None:
-        import torchaudio
-        self.logger = logger
-        pass
-    
-    def _convert_audio_to_tokens(self, audio: str) -> List[str]:
-        """
-        Convert audio to a list of tokens.
-        """
-        pass
-
-    def _convert_tokens_to_audio(self, tokens: List[str]) -> str:
-        """
-        Convert tokens to audio.
-        """
-        pass
