@@ -1,5 +1,5 @@
 model:
-  name: "gpt2"
+  name: "BasicTestModel"
   pretrained: true
   num_layers: 12
   num_heads: 12
