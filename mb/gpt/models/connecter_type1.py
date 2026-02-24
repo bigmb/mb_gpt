@@ -15,8 +15,7 @@ class BasicLLM(nn.Module):
 
     def forward(self, 
                 vlm_emb: torch.Tensor, 
-                text_emb: torch.Tensor, 
-                input_ids: torch.Tensor) -> torch.Tensor:
+                text_emb: torch.Tensor) -> torch.Tensor:
         
 
         combined_emb = torch.cat([vlm_emb, text_emb], dim=-1)
