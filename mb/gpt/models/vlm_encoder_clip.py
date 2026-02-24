@@ -8,7 +8,6 @@ class VlmEncoderTest(nn.Module):
         super(VlmEncoderTest, self).__init__()
         self.linear = nn.Linear(in_dim, out_dim)
         
-        def forward(self, x):
+    def forward(self, x):
             return self.linear(x)
-        
         
