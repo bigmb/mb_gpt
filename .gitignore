@@ -1,6 +1,11 @@
 
 ## gitignore file for Python projects
 logs
+examples/log/
+examples/log1/
+example/log/
+example/log1/
+examples/*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
