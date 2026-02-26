@@ -6,17 +6,27 @@ __all__ = ["BasicLLM"]
 
 class BasicLLM(nn.Module):
     def __init__(self, 
-                 vlm_emb_dim: int,
-                 text_emb_dim: int,
-                 embedding_dim: int):
+                 vlm_encoder: nn.Module,
+                 text_encoder: nn.Module,
+                 vlm_emb_dim: Optional[int] = None,
+                 text_emb_dim: Optional[int] = None,
+                 output_classes: int = 10):
         super().__init__()
 
-        self.linear1 = nn.Linear(vlm_emb_dim + text_emb_dim, embedding_dim)
+        self.vlm_encoder = vlm_encoder if vlm_encoder is not None else nn.Identity()
+        self.text_encoder = text_encoder if text_encoder is not None else nn.Identity()
+
+        if vlm_emb_dim is not None and text_emb_dim is not None:
+            self.linear1 = nn.Linear(vlm_emb_dim + text_emb_dim, output_classes)
+        else:
+            self.linear1 = nn.LazyLinear(output_classes)
 
     def forward(self, 
                 vlm_emb: torch.Tensor, 
                 text_emb: torch.Tensor) -> torch.Tensor:
         
+        vlm_emb = self.vlm_encoder(vlm_emb)
+        text_emb = self.text_encoder(text_emb)
 
         combined_emb = torch.cat([vlm_emb, text_emb], dim=-1)
 
@@ -26,6 +36,3 @@ class BasicLLM(nn.Module):
             projected_emb = projected_emb.unsqueeze(1)
 
         return projected_emb
-    
-    def __repr__(self):
-        return f"BasicLLM(embedding_dim={self.linear1.out_features})"

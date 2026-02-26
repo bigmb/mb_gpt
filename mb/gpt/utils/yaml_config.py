@@ -15,9 +15,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Union
 
+__all__ = [TrainParams,ModelParams,DataParams,OutputParams]
 
 PathLike = Union[str, Path]
-
 
 @dataclass(frozen=True, slots=True)
 class YamlConfig:
@@ -74,3 +74,19 @@ class YamlConfig:
         """Dictionary-like access."""
 
         return self.data.get(key, default)
+
+@dataclass
+class ModelParams:
+    pass
+
+@dataclass
+class DataParams:
+    pass
+
+@dataclass
+class TrainParams:
+    pass
+
+@dataclass
+class OutputParams:
+    pass

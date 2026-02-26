@@ -1,9 +1,9 @@
 ## summary file
 from mb.utils.logging import logg
 
-__all__ = ['Summary']
+__all__ = ['TrainSummary']
 
-class Summary:
+class TrainSummary:
     def __init__(self, data: dict,logger=None):
         self.summary = data
         self.output_path = self.summary.get('output_path', './summary_output.json')
@@ -11,7 +11,7 @@ class Summary:
         self.logger = logger
 
     def __repr__(self):
-        return f"Summary(summary={self.summary})"
+        return f"TrainSummary(TrainSummary={self.summary})"
     
     def _epoch_data(self, epoch: int, loss: float, **kwargs):
         pass
