@@ -10,6 +10,7 @@ import os
 from mb.utils.logging import logg,logger
 from mb.gpt.utils.gpu_tools import get_gpus_by_least_usage
 from mb.gpt.utils.train_summary import TrainSummary
+from mb.gpt.models.final_model import GetModel
 
 __all__ = ['Trainer','DDPTrainer']
 
@@ -53,7 +54,7 @@ class DDPTrainer:
 
 
         ## Setting Model
-        model = get_model(ModelParams)
+        model = GetModel(self.ModelParams)
         self.model = model.to(self.device)
         self.model = DDP(self.model, device_ids=[self.rank])
         
