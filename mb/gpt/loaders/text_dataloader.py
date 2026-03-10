@@ -37,8 +37,13 @@ class TextTokenizerDataset(Dataset):
         tokens = self.tokenizer.encode(text)
         
         if self.max_length is not None:
-            vocab = getattr(self.tokenizer, "vocab", None) or {}
-            pad_id = vocab.get(self.pad_token, 0)
+            pad_id = 0
+            enc = getattr(self.tokenizer, "enc", None)
+            if enc is not None and getattr(enc, "eot_token", None) is not None:
+                pad_id = int(enc.eot_token)
+            else:
+                vocab = getattr(self.tokenizer, "vocab", None) or {}
+                pad_id = int(vocab.get(self.pad_token, 0))
             if len(tokens) > self.max_length:
                 tokens = tokens[:self.max_length] 
             else:
@@ -83,8 +88,14 @@ class TextTokenizerDataLoader(DataLoader):
             return torch.stack(batch)
 
         max_len = max(lengths)
-        vocab = getattr(self.dataset.tokenizer, "vocab", None) or {}
-        pad_id = vocab.get(self.dataset.pad_token, 0)
+        tok = self.dataset.tokenizer
+        pad_id = 0
+        enc = getattr(tok, "enc", None)
+        if enc is not None and getattr(enc, "eot_token", None) is not None:
+            pad_id = int(enc.eot_token)
+        else:
+            vocab = getattr(tok, "vocab", None) or {}
+            pad_id = int(vocab.get(self.dataset.pad_token, 0))
         padded = torch.full((len(batch), max_len), int(pad_id), dtype=torch.long)
         for i, seq in enumerate(batch):
             padded[i, : seq.numel()] = seq

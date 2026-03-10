@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 import importlib
-from typing import List, Pattern
+from typing import List, Optional, Pattern
 
 try:
     import regex as _re 
@@ -22,7 +22,7 @@ from mb.utils.logging import logg
 
 __all__ = ["TextTokenizer", "VITokenizer"]
 
-SPLIT_REGEX1: Pattern[str] | None = (
+SPLIT_REGEX1: Optional[Pattern[str]] = (
     _re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+|\p{N}+|[^\s\p{L}\p{N}]+|\s+""")
     if _HAS_REGEX
     else None
@@ -30,7 +30,7 @@ SPLIT_REGEX1: Pattern[str] | None = (
 SPLIT_REGEX2: Pattern[str] = _re.compile(r"""[\w'-]+|[^\w\s]+|\s+""")
 
 
-def _log_info(message: str, logger: logging.Logger | None = None) -> None:
+def _log_info(message: str, logger: Optional[logging.Logger] = None) -> None:
     (logger or logging.getLogger(__name__)).info(message)
 
 
@@ -53,7 +53,7 @@ class TextTokenizer(nn.Module):
         self.enc = tiktoken.get_encoding(token_type)
         return self.enc
 
-    def _convert_split_text(self, text: str, split_regex: Pattern[str] | None = None) -> List[str]:
+    def _convert_split_text(self, text: str, split_regex: Optional[Pattern[str]] = None) -> List[str]:
         """
         Split text into tokens.
         Args:

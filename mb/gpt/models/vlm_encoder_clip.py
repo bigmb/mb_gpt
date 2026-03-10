@@ -10,4 +10,10 @@ class VlmEncoderTest(nn.Module):
         
     def forward(self, x):
             return self.linear(x)
+
+
+def model() -> nn.Module:
+    """Factory for YAML selection (no kwargs)."""
+
+    return VlmEncoderTest()
         

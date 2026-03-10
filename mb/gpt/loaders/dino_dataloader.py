@@ -17,7 +17,7 @@ class FoodDataset(Dataset):
     '''
     def __init__(self, 
                  df: pd.DataFrame, 
-                 text_column: str | None = 'description'):
+                 text_column: Optional[str] = 'description'):
         self.df = df
         self.paths = df['feature_path'].values
         self.labels = df['label'].values

@@ -1,13 +1,13 @@
 import torch
 from torch import nn
-from typing import List, Optional
+from typing import Optional
 
 __all__ = ["BasicLLM"]
 
 class BasicLLM(nn.Module):
     def __init__(self, 
-                 vlm_encoder: nn.Module,
-                 text_encoder: nn.Module,
+                 vlm_encoder: Optional[nn.Module] = None,
+                 text_encoder: Optional[nn.Module] = None,
                  vlm_emb_dim: Optional[int] = None,
                  text_emb_dim: Optional[int] = None,
                  output_classes: int = 10):
@@ -36,3 +36,25 @@ class BasicLLM(nn.Module):
             projected_emb = projected_emb.unsqueeze(1)
 
         return projected_emb
+
+
+def model(
+    *,
+    vlm_encoder: Optional[nn.Module] = None,
+    text_encoder: Optional[nn.Module] = None,
+    output_classes: int = 10,
+    vlm_emb_dim: Optional[int] = None,
+    text_emb_dim: Optional[int] = None,
+) -> nn.Module:
+    """Factory for YAML selection.
+
+    Expected to be called by `GetModel` with `vlm_encoder` and `text_encoder`.
+    """
+
+    return BasicLLM(
+        vlm_encoder=vlm_encoder,
+        text_encoder=text_encoder,
+        vlm_emb_dim=vlm_emb_dim,
+        text_emb_dim=text_emb_dim,
+        output_classes=output_classes,
+    )

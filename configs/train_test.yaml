@@ -1,12 +1,8 @@
 model:
-  name: "BasicTestModel"
-  pretrained: true
-  num_layers: 12
-  num_heads: 12
-  d_model: 768
-  d_ff: 3072
-  max_position_embeddings: 1024
-  vocab_size: 50257
+  # selection-only config (no kwargs/hyperparams)
+  text_encoder: "text_encoder_smalvlm.model"
+  vlm_encoder: "vlm_encoder_clip.model"
+  connecter: "connecter_type1.model"
 
 training:
   batch_size: 8

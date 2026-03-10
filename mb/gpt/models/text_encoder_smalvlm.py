@@ -10,3 +10,9 @@ class TextEncoderTest(nn.Module):
         
     def forward(self, x):
         return self.linear(x)
+
+
+def model() -> nn.Module:
+    """Factory for YAML selection (no kwargs)."""
+
+    return TextEncoderTest()
