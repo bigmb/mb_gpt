@@ -54,8 +54,8 @@ def get_dist_loader(df, rank, world_size, batch_size=64):
         dataset,
         batch_size=batch_size,
         sampler=sampler,
-        num_workers=8,      # Tune this based on your CPU cores
-        pin_memory=True,    # Essential for fast GPU transfer
-        prefetch_factor=2   # Pre-loads the next batches
+        num_workers=8,     
+        pin_memory=True,   
+        prefetch_factor=2   ## no of batches to prefetch/preload in the background
     )
     return loader

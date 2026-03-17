@@ -1,15 +1,9 @@
 """YAML config loader + typed parameter objects.
 
-Goal: keep model config selection-only.
-
-In YAML you should only *select* which modules to use, e.g.
-
 model:
   text_encoder: text_encoder_smalvlm.model
   vlm_encoder: vlm_encoder_clip.model
   connecter: connecter_type1.model
-
-No model hyperparams (num_layers/heads/etc) and no encoder kwargs here.
 """
 
 from __future__ import annotations
@@ -29,9 +23,9 @@ __all__ = [
 PathLike = Union[str, Path]
 
 
-try:  # optional dependency (provided by mb_utils)
+try:  
     from mb.utils.yaml_reader import read_yaml as _read_yaml  # type: ignore
-except Exception:  # pragma: no cover
+except Exception:
     _read_yaml = None
 
 
@@ -64,7 +58,7 @@ class YamlConfig:
 
         loaded: Any
         if _read_yaml is not None:
-            # mb_utils helper (signature differs across versions: Path vs str)
+            # mb_utils helper 
             try:
                 loaded = _read_yaml(yaml_path)
             except Exception:
@@ -72,8 +66,8 @@ class YamlConfig:
         else:
             # fallback to PyYAML if installed
             try:
-                import yaml  # type: ignore
-            except Exception as e:  # pragma: no cover
+                import yaml  
+            except Exception as e: 
                 raise ImportError(
                     "Missing YAML reader. Install `mb_utils` (preferred) or `PyYAML`."
                 ) from e
@@ -106,7 +100,9 @@ class YamlConfig:
 
 @dataclass
 class ModelParams:
-    """Selection-only model config."""
+    """
+    Selection-only model config.
+    """
 
     text_encoder: Optional[str] = None
     vlm_encoder: Optional[str] = None

@@ -24,3 +24,5 @@ dataset:
 output:
   save_dir: "./model1" ## checkpoints,logs and data will be saved here
   print_output: true
+  load_latest_checkpoint: False ##add this - if latest checkpoint exists in save_dir, 
+  ##it will be loaded and training will resume from there. If False, training will start from scratch.

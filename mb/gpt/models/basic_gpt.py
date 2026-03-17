@@ -56,7 +56,7 @@ class CausalSelfAttention(nn.Module):
                 dropout_p=self.attn_dropout.p if self.training else 0.0,
                 is_causal=True,
             )
-        else:  # pragma: no cover
+        else: 
             att = (q @ k.transpose(-2, -1)) / math.sqrt(self.head_dim)
             causal = torch.tril(torch.ones(seq_len, seq_len, device=x.device, dtype=torch.bool))
             att = att.masked_fill(~causal, float("-inf"))
